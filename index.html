@@ -46,27 +46,57 @@ h1 { margin: 0 0 4px; font-size: 24px; }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(24, minmax(72px, 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(48, minmax(58px, 1fr));
+  gap: 3px;
   overflow-x: auto;
   padding-bottom: 4px;
 }
-.hour {
-  border: 1px solid var(--border); border-radius: 8px;
-  padding: 6px; min-height: 92px; background: #fafafa;
+.slot {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 4px; min-height: 92px; background: #fafafa;
 }
-.hour-label {
-  font-weight: 700; font-size: 11px; color: #374151;
-  text-align: center; margin-bottom: 6px; padding: 2px 4px;
+/* Visually mark the start of each clock hour so 30-min cells are easy to scan. */
+.slot.hour-start {
+  border-left: 2px solid #cbd5e1;
+}
+.slot-label {
+  font-weight: 600; font-size: 10px; color: #6b7280;
+  text-align: center; margin-bottom: 4px; padding: 2px 2px;
   background: #fff; border: 1px solid var(--border); border-radius: 4px;
+  font-variant-numeric: tabular-nums;
 }
-.hour.has-assigned { background: #ecfdf5; border-color: #6ee7b7; }
+.slot.hour-start .slot-label {
+  font-weight: 700; color: #1f2937;
+}
+.slot.has-assigned { background: #ecfdf5; border-color: #6ee7b7; }
+/* 2+ assigned players in the same 30-min slot: red ring + badge. */
+.slot.conflict {
+  background: #fef2f2; border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239,68,68,0.25) inset;
+}
+.slot.conflict.has-assigned { background: #fee2e2; }
+.conflict-badge {
+  display: block; margin: 0 0 4px;
+  font-size: 10px; font-weight: 700; color: #b91c1c;
+  background: #fee2e2; border: 1px solid #fca5a5;
+  border-radius: 4px; text-align: center; padding: 2px 4px;
+  letter-spacing: 0.3px;
+}
+.count.conflict-count {
+  padding: 2px 8px; border-radius: 12px;
+  background: #f3f4f6; border: 1px solid var(--border);
+}
+.count.conflict-count.active {
+  background: #fee2e2; color: #b91c1c;
+  border-color: #fca5a5; font-weight: 600;
+}
 
 .chip {
-  display: block; padding: 5px 7px; margin-bottom: 4px;
-  border-radius: 5px; font-size: 11px; color: #fff;
-  cursor: pointer; user-select: none; line-height: 1.3;
+  display: block; padding: 4px 5px; margin-bottom: 3px;
+  border-radius: 5px; font-size: 10.5px; color: #fff;
+  cursor: pointer; user-select: none; line-height: 1.25;
   border: 2px solid transparent; transition: all 0.12s ease;
+  overflow: hidden;
 }
 .chip:hover { transform: translateY(-1px); filter: brightness(1.05); }
 .chip strong { font-weight: 700; display: block; }
@@ -78,6 +108,14 @@ h1 { margin: 0 0 4px; font-size: 24px; }
   box-shadow: 0 0 0 2px #facc15 inset, 0 0 0 3px rgba(250,204,21,0.4);
 }
 .chip.dimmed { opacity: 0.28; }
+/* In a conflict cell, the highest-speedup chip wears a small gold star
+   prefix on its name so it's obvious who has priority. */
+.chip.priority-winner strong::before {
+  content: "°5 ";
+  color: #fde047;
+  text-shadow: 0 0 2px rgba(0,0,0,0.45);
+  margin-right: 1px;
+}
 
 /* Faded "candidate" version of a chip placed at every hour a flexible
    player listed. Becomes solid+assigned when the user commits them to
@@ -190,109 +228,209 @@ tr:hover td { background: #fafafa; }
 </head>
 <body data-csv-key="SVS 4045">
 <h1>SVS Schedule — SVS 4045</h1>
-<div class="subtitle">5 responses · generated 2026-05-15 18:13  · single-hour players are pre-claimed; click any chip to toggle</div>
-<div class="legend"><span><i class="swatch tier-top"></i>≥20 days</span><span><i class="swatch tier-high"></i>10–20 days</span><span><i class="swatch tier-med"></i>3–10 days</span><span><i class="swatch tier-low"></i>&lt;3 days</span><span><i class="swatch tier-unknown"></i>speedup not parseable</span><span>fixed-hour players are auto-assigned (click to release)</span><span>striped chip = flexible candidate (pick one from the blue lane)</span><span>declined players are hidden from that day</span></div>
-<div class="toolbar"><button onclick="clearAll()">Reset to defaults</button><button onclick="window.print()">Print</button><div class="spacer"></div><div class="count" id="assignedCount">0 / 10 assigned</div></div>
-<section class="day-card" data-day="construction"><h2>🏗️ Construction Day</h2><div class="meta">Vice President buff · <strong>3</strong> fixed · <strong>1</strong> flexible · <strong>0</strong> unscheduled · <strong>1</strong> declined</div><div class="grid"><div class="hour" data-hour="0"><div class="hour-label">00:00</div><div class="chip tier-med chip-ghost" data-player="5" data-day="construction" title="moto (697740133)
+<div class="subtitle">5 responses · generated 2026-05-15 23:27  · 48 × 30-min UTC slots/day; single-slot players are pre-claimed; click any chip to toggle</div>
+<div class="legend"><span><i class="swatch tier-top"></i>≥20 days</span><span><i class="swatch tier-high"></i>10–20 days</span><span><i class="swatch tier-med"></i>3–10 days</span><span><i class="swatch tier-low"></i>&lt;3 days</span><span><i class="swatch tier-unknown"></i>speedup not parseable</span><span>fixed-slot players are auto-assigned (click to release)</span><span>striped chip = flexible candidate (pick one from the blue lane)</span><span>declined players are hidden from that day</span><span>columns are 30-min UTC slots; the bold left edge marks each HH:00</span><span>red cell = 2+ players in the same slot (you'll be asked to confirm)</span></div>
+<div class="toolbar"><button onclick="clearAll()">Reset to defaults</button><button onclick="window.print()">Print</button><div class="spacer"></div><div class="count" id="assignedCount">0 / 10 assigned</div><div class="count conflict-count" id="conflictCount">no conflicts</div></div>
+<section class="day-card" data-day="construction"><h2>🏗️ Construction Day</h2><div class="meta">Vice President buff · <strong>0</strong> fixed · <strong>4</strong> flexible · <strong>0</strong> unscheduled · <strong>1</strong> declined</div><div class="grid"><div class="slot hour-start" data-slot="0"><div class="slot-label">00:00</div><div class="chip tier-med chip-ghost" data-player="5" data-day="construction" title="moto (697740133)
 Fire crystals: 425
 Speedups: 7-8 days  (7.5d)
 Preferred: 0-1 utc or 22-24 utc
-Parsed hours UTC: [0, 1, 22, 23]"><strong>moto</strong><div class="sub">7.5d · candidate</div><div class="fc">FC 425</div></div></div><div class="hour" data-hour="1"><div class="hour-label">01:00</div><div class="chip tier-med chip-ghost" data-player="5" data-day="construction" title="moto (697740133)
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">7.5d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot" data-slot="1"><div class="slot-label">00:30</div><div class="chip tier-med chip-ghost" data-player="5" data-day="construction" title="moto (697740133)
 Fire crystals: 425
 Speedups: 7-8 days  (7.5d)
 Preferred: 0-1 utc or 22-24 utc
-Parsed hours UTC: [0, 1, 22, 23]"><strong>moto</strong><div class="sub">7.5d · candidate</div><div class="fc">FC 425</div></div></div><div class="hour" data-hour="2"><div class="hour-label">02:00</div></div><div class="hour" data-hour="3"><div class="hour-label">03:00</div></div><div class="hour" data-hour="4"><div class="hour-label">04:00</div></div><div class="hour" data-hour="5"><div class="hour-label">05:00</div></div><div class="hour" data-hour="6"><div class="hour-label">06:00</div></div><div class="hour" data-hour="7"><div class="hour-label">07:00</div></div><div class="hour" data-hour="8"><div class="hour-label">08:00</div></div><div class="hour" data-hour="9"><div class="hour-label">09:00</div></div><div class="hour" data-hour="10"><div class="hour-label">10:00</div><div class="chip tier-top" data-player="3" data-day="construction" title="HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl (699049556)
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">7.5d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot hour-start" data-slot="2"><div class="slot-label">01:00</div><div class="chip tier-med chip-ghost" data-player="5" data-day="construction" title="moto (697740133)
+Fire crystals: 425
+Speedups: 7-8 days  (7.5d)
+Preferred: 0-1 utc or 22-24 utc
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">7.5d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot" data-slot="3"><div class="slot-label">01:30</div><div class="chip tier-med chip-ghost" data-player="5" data-day="construction" title="moto (697740133)
+Fire crystals: 425
+Speedups: 7-8 days  (7.5d)
+Preferred: 0-1 utc or 22-24 utc
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">7.5d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot hour-start" data-slot="4"><div class="slot-label">02:00</div></div><div class="slot" data-slot="5"><div class="slot-label">02:30</div></div><div class="slot hour-start" data-slot="6"><div class="slot-label">03:00</div></div><div class="slot" data-slot="7"><div class="slot-label">03:30</div></div><div class="slot hour-start" data-slot="8"><div class="slot-label">04:00</div></div><div class="slot" data-slot="9"><div class="slot-label">04:30</div></div><div class="slot hour-start" data-slot="10"><div class="slot-label">05:00</div></div><div class="slot" data-slot="11"><div class="slot-label">05:30</div></div><div class="slot hour-start" data-slot="12"><div class="slot-label">06:00</div></div><div class="slot" data-slot="13"><div class="slot-label">06:30</div></div><div class="slot hour-start" data-slot="14"><div class="slot-label">07:00</div></div><div class="slot" data-slot="15"><div class="slot-label">07:30</div></div><div class="slot hour-start" data-slot="16"><div class="slot-label">08:00</div></div><div class="slot" data-slot="17"><div class="slot-label">08:30</div></div><div class="slot hour-start" data-slot="18"><div class="slot-label">09:00</div></div><div class="slot" data-slot="19"><div class="slot-label">09:30</div></div><div class="slot hour-start" data-slot="20"><div class="slot-label">10:00</div><div class="chip tier-top chip-ghost" data-player="3" data-day="construction" title="HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl (699049556)
 Fire crystals: 1810
 Speedups: 40 days  (40d)
 Preferred: 10:00 UTC
-Parsed hours UTC: [10]"><strong>HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl</strong><div class="sub">40d</div><div class="fc">FC 1,810</div></div></div><div class="hour" data-hour="11"><div class="hour-label">11:00</div></div><div class="hour" data-hour="12"><div class="hour-label">12:00</div><div class="chip tier-top" data-player="4" data-day="construction" title="Salad (697936161)
+Parsed slots UTC: 10:00, 10:30"><strong>HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl</strong><div class="sub">40d · candidate</div><div class="fc">FC 1,810</div></div></div><div class="slot" data-slot="21"><div class="slot-label">10:30</div><div class="chip tier-top chip-ghost" data-player="3" data-day="construction" title="HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl (699049556)
+Fire crystals: 1810
+Speedups: 40 days  (40d)
+Preferred: 10:00 UTC
+Parsed slots UTC: 10:00, 10:30"><strong>HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl</strong><div class="sub">40d · candidate</div><div class="fc">FC 1,810</div></div></div><div class="slot hour-start" data-slot="22"><div class="slot-label">11:00</div></div><div class="slot" data-slot="23"><div class="slot-label">11:30</div></div><div class="slot hour-start" data-slot="24"><div class="slot-label">12:00</div><div class="chip tier-top chip-ghost" data-player="4" data-day="construction" title="Salad (697936161)
 Fire crystals: 1000
 Speedups: 30 days  (30d)
 Preferred: 12 UTC
-Parsed hours UTC: [12]"><strong>Salad</strong><div class="sub">30d</div><div class="fc">FC 1,000</div></div></div><div class="hour" data-hour="13"><div class="hour-label">13:00</div><div class="chip tier-high" data-player="2" data-day="construction" title="Freakypenguin5 (Freakypenguin5)
+Parsed slots UTC: 12:00, 12:30"><strong>Salad</strong><div class="sub">30d · candidate</div><div class="fc">FC 1,000</div></div></div><div class="slot" data-slot="25"><div class="slot-label">12:30</div><div class="chip tier-top chip-ghost" data-player="4" data-day="construction" title="Salad (697936161)
+Fire crystals: 1000
+Speedups: 30 days  (30d)
+Preferred: 12 UTC
+Parsed slots UTC: 12:00, 12:30"><strong>Salad</strong><div class="sub">30d · candidate</div><div class="fc">FC 1,000</div></div></div><div class="slot hour-start" data-slot="26"><div class="slot-label">13:00</div><div class="chip tier-high chip-ghost" data-player="2" data-day="construction" title="Freakypenguin5 (Freakypenguin5)
 Fire crystals: 500
 Speedups: 15 days  (15d)
 Preferred: 1300utc or later
-Parsed hours UTC: [13]"><strong>Freakypenguin5</strong><div class="sub">15d</div><div class="fc">FC 500</div></div></div><div class="hour" data-hour="14"><div class="hour-label">14:00</div></div><div class="hour" data-hour="15"><div class="hour-label">15:00</div></div><div class="hour" data-hour="16"><div class="hour-label">16:00</div></div><div class="hour" data-hour="17"><div class="hour-label">17:00</div></div><div class="hour" data-hour="18"><div class="hour-label">18:00</div></div><div class="hour" data-hour="19"><div class="hour-label">19:00</div></div><div class="hour" data-hour="20"><div class="hour-label">20:00</div></div><div class="hour" data-hour="21"><div class="hour-label">21:00</div></div><div class="hour" data-hour="22"><div class="hour-label">22:00</div><div class="chip tier-med chip-ghost" data-player="5" data-day="construction" title="moto (697740133)
+Parsed slots UTC: 13:00, 13:30"><strong>Freakypenguin5</strong><div class="sub">15d · candidate</div><div class="fc">FC 500</div></div></div><div class="slot" data-slot="27"><div class="slot-label">13:30</div><div class="chip tier-high chip-ghost" data-player="2" data-day="construction" title="Freakypenguin5 (Freakypenguin5)
+Fire crystals: 500
+Speedups: 15 days  (15d)
+Preferred: 1300utc or later
+Parsed slots UTC: 13:00, 13:30"><strong>Freakypenguin5</strong><div class="sub">15d · candidate</div><div class="fc">FC 500</div></div></div><div class="slot hour-start" data-slot="28"><div class="slot-label">14:00</div></div><div class="slot" data-slot="29"><div class="slot-label">14:30</div></div><div class="slot hour-start" data-slot="30"><div class="slot-label">15:00</div></div><div class="slot" data-slot="31"><div class="slot-label">15:30</div></div><div class="slot hour-start" data-slot="32"><div class="slot-label">16:00</div></div><div class="slot" data-slot="33"><div class="slot-label">16:30</div></div><div class="slot hour-start" data-slot="34"><div class="slot-label">17:00</div></div><div class="slot" data-slot="35"><div class="slot-label">17:30</div></div><div class="slot hour-start" data-slot="36"><div class="slot-label">18:00</div></div><div class="slot" data-slot="37"><div class="slot-label">18:30</div></div><div class="slot hour-start" data-slot="38"><div class="slot-label">19:00</div></div><div class="slot" data-slot="39"><div class="slot-label">19:30</div></div><div class="slot hour-start" data-slot="40"><div class="slot-label">20:00</div></div><div class="slot" data-slot="41"><div class="slot-label">20:30</div></div><div class="slot hour-start" data-slot="42"><div class="slot-label">21:00</div></div><div class="slot" data-slot="43"><div class="slot-label">21:30</div></div><div class="slot hour-start" data-slot="44"><div class="slot-label">22:00</div><div class="chip tier-med chip-ghost" data-player="5" data-day="construction" title="moto (697740133)
 Fire crystals: 425
 Speedups: 7-8 days  (7.5d)
 Preferred: 0-1 utc or 22-24 utc
-Parsed hours UTC: [0, 1, 22, 23]"><strong>moto</strong><div class="sub">7.5d · candidate</div><div class="fc">FC 425</div></div></div><div class="hour" data-hour="23"><div class="hour-label">23:00</div><div class="chip tier-med chip-ghost" data-player="5" data-day="construction" title="moto (697740133)
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">7.5d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot" data-slot="45"><div class="slot-label">22:30</div><div class="chip tier-med chip-ghost" data-player="5" data-day="construction" title="moto (697740133)
 Fire crystals: 425
 Speedups: 7-8 days  (7.5d)
 Preferred: 0-1 utc or 22-24 utc
-Parsed hours UTC: [0, 1, 22, 23]"><strong>moto</strong><div class="sub">7.5d · candidate</div><div class="fc">FC 425</div></div></div></div><div class="flex-lane"><h3>Flexible candidates · 1 · pick one UTC hour per player</h3><div class="flex-cards"><div class="flex-card tier-med" data-player="5" data-day="construction" title="moto (697740133)
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">7.5d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot hour-start" data-slot="46"><div class="slot-label">23:00</div><div class="chip tier-med chip-ghost" data-player="5" data-day="construction" title="moto (697740133)
+Fire crystals: 425
+Speedups: 7-8 days  (7.5d)
+Preferred: 0-1 utc or 22-24 utc
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">7.5d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot" data-slot="47"><div class="slot-label">23:30</div><div class="chip tier-med chip-ghost" data-player="5" data-day="construction" title="moto (697740133)
+Fire crystals: 425
+Speedups: 7-8 days  (7.5d)
+Preferred: 0-1 utc or 22-24 utc
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">7.5d · candidate</div><div class="fc">FC 425</div></div></div></div><div class="flex-lane"><h3>Flexible candidates · 4 · pick one UTC slot per player</h3><div class="flex-cards"><div class="flex-card tier-top" data-player="3" data-day="construction" title="HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl (699049556)
+Speedups: 40 days
+Preferred: 10:00 UTC
+Click a UTC slot to commit them to that 30-minute window."><div class="flex-header"><strong>HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl</strong><span class="sub"> · 40d · FC 1,810</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="3" data-day="construction" data-slot="20">10:00</button><button class="opt" data-player="3" data-day="construction" data-slot="21">10:30</button></div></div><div class="flex-card tier-top" data-player="4" data-day="construction" title="Salad (697936161)
+Speedups: 30 days
+Preferred: 12 UTC
+Click a UTC slot to commit them to that 30-minute window."><div class="flex-header"><strong>Salad</strong><span class="sub"> · 30d · FC 1,000</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="4" data-day="construction" data-slot="24">12:00</button><button class="opt" data-player="4" data-day="construction" data-slot="25">12:30</button></div></div><div class="flex-card tier-high" data-player="2" data-day="construction" title="Freakypenguin5 (Freakypenguin5)
+Speedups: 15 days
+Preferred: 1300utc or later
+Click a UTC slot to commit them to that 30-minute window."><div class="flex-header"><strong>Freakypenguin5</strong><span class="sub"> · 15d · FC 500</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="2" data-day="construction" data-slot="26">13:00</button><button class="opt" data-player="2" data-day="construction" data-slot="27">13:30</button></div></div><div class="flex-card tier-med" data-player="5" data-day="construction" title="moto (697740133)
 Speedups: 7-8 days
 Preferred: 0-1 utc or 22-24 utc
-Click a UTC hour to commit them to that slot."><div class="flex-header"><strong>moto</strong><span class="sub"> · 7.5d · FC 425</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="5" data-day="construction" data-hour="0">00</button><button class="opt" data-player="5" data-day="construction" data-hour="1">01</button><button class="opt" data-player="5" data-day="construction" data-hour="22">22</button><button class="opt" data-player="5" data-day="construction" data-hour="23">23</button></div></div></div></div><details class="declined-lane"><summary>Declined · 1 <span class="declined-hint">(opted out of this day; not schedulable)</span></summary><ul class="declined-list"><li title="I don’t have much , give to others"><strong>Little Biter</strong><span class="declined-meta"> · speedups: 30h · time: I don’t have much , give to others</span></li></ul></details></section><section class="day-card" data-day="training"><h2>⚔️ Troop Training Day</h2><div class="meta">Minister of Education buff · <strong>2</strong> fixed · <strong>1</strong> flexible · <strong>0</strong> unscheduled · <strong>2</strong> declined</div><div class="grid"><div class="hour" data-hour="0"><div class="hour-label">00:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="training" title="moto (697740133)
+Click a UTC slot to commit them to that 30-minute window."><div class="flex-header"><strong>moto</strong><span class="sub"> · 7.5d · FC 425</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="5" data-day="construction" data-slot="0">00:00</button><button class="opt" data-player="5" data-day="construction" data-slot="1">00:30</button><button class="opt" data-player="5" data-day="construction" data-slot="2">01:00</button><button class="opt" data-player="5" data-day="construction" data-slot="3">01:30</button><button class="opt" data-player="5" data-day="construction" data-slot="44">22:00</button><button class="opt" data-player="5" data-day="construction" data-slot="45">22:30</button><button class="opt" data-player="5" data-day="construction" data-slot="46">23:00</button><button class="opt" data-player="5" data-day="construction" data-slot="47">23:30</button></div></div></div></div><details class="declined-lane"><summary>Declined · 1 <span class="declined-hint">(opted out of this day; not schedulable)</span></summary><ul class="declined-list"><li title="I don’t have much , give to others"><strong>Little Biter</strong><span class="declined-meta"> · speedups: 30h · time: I don’t have much , give to others</span></li></ul></details></section><section class="day-card" data-day="training"><h2>⚔️ Troop Training Day</h2><div class="meta">Minister of Education buff · <strong>0</strong> fixed · <strong>3</strong> flexible · <strong>0</strong> unscheduled · <strong>2</strong> declined</div><div class="grid"><div class="slot hour-start" data-slot="0"><div class="slot-label">00:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="training" title="moto (697740133)
 Fire crystals: 425
 Speedups: 2 days  (2d)
 Preferred: 0-1 utc or 22-24 utc
-Parsed hours UTC: [0, 1, 22, 23]"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="hour" data-hour="1"><div class="hour-label">01:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="training" title="moto (697740133)
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot" data-slot="1"><div class="slot-label">00:30</div><div class="chip tier-low chip-ghost" data-player="5" data-day="training" title="moto (697740133)
 Fire crystals: 425
 Speedups: 2 days  (2d)
 Preferred: 0-1 utc or 22-24 utc
-Parsed hours UTC: [0, 1, 22, 23]"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="hour" data-hour="2"><div class="hour-label">02:00</div></div><div class="hour" data-hour="3"><div class="hour-label">03:00</div></div><div class="hour" data-hour="4"><div class="hour-label">04:00</div></div><div class="hour" data-hour="5"><div class="hour-label">05:00</div></div><div class="hour" data-hour="6"><div class="hour-label">06:00</div></div><div class="hour" data-hour="7"><div class="hour-label">07:00</div></div><div class="hour" data-hour="8"><div class="hour-label">08:00</div></div><div class="hour" data-hour="9"><div class="hour-label">09:00</div></div><div class="hour" data-hour="10"><div class="hour-label">10:00</div></div><div class="hour" data-hour="11"><div class="hour-label">11:00</div></div><div class="hour" data-hour="12"><div class="hour-label">12:00</div></div><div class="hour" data-hour="13"><div class="hour-label">13:00</div><div class="chip tier-high" data-player="2" data-day="training" title="Freakypenguin5 (Freakypenguin5)
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot hour-start" data-slot="2"><div class="slot-label">01:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="training" title="moto (697740133)
+Fire crystals: 425
+Speedups: 2 days  (2d)
+Preferred: 0-1 utc or 22-24 utc
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot" data-slot="3"><div class="slot-label">01:30</div><div class="chip tier-low chip-ghost" data-player="5" data-day="training" title="moto (697740133)
+Fire crystals: 425
+Speedups: 2 days  (2d)
+Preferred: 0-1 utc or 22-24 utc
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot hour-start" data-slot="4"><div class="slot-label">02:00</div></div><div class="slot" data-slot="5"><div class="slot-label">02:30</div></div><div class="slot hour-start" data-slot="6"><div class="slot-label">03:00</div></div><div class="slot" data-slot="7"><div class="slot-label">03:30</div></div><div class="slot hour-start" data-slot="8"><div class="slot-label">04:00</div></div><div class="slot" data-slot="9"><div class="slot-label">04:30</div></div><div class="slot hour-start" data-slot="10"><div class="slot-label">05:00</div></div><div class="slot" data-slot="11"><div class="slot-label">05:30</div></div><div class="slot hour-start" data-slot="12"><div class="slot-label">06:00</div></div><div class="slot" data-slot="13"><div class="slot-label">06:30</div></div><div class="slot hour-start" data-slot="14"><div class="slot-label">07:00</div></div><div class="slot" data-slot="15"><div class="slot-label">07:30</div></div><div class="slot hour-start" data-slot="16"><div class="slot-label">08:00</div></div><div class="slot" data-slot="17"><div class="slot-label">08:30</div></div><div class="slot hour-start" data-slot="18"><div class="slot-label">09:00</div></div><div class="slot" data-slot="19"><div class="slot-label">09:30</div></div><div class="slot hour-start" data-slot="20"><div class="slot-label">10:00</div></div><div class="slot" data-slot="21"><div class="slot-label">10:30</div></div><div class="slot hour-start" data-slot="22"><div class="slot-label">11:00</div></div><div class="slot" data-slot="23"><div class="slot-label">11:30</div></div><div class="slot hour-start" data-slot="24"><div class="slot-label">12:00</div></div><div class="slot" data-slot="25"><div class="slot-label">12:30</div></div><div class="slot hour-start" data-slot="26"><div class="slot-label">13:00</div><div class="chip tier-high chip-ghost" data-player="2" data-day="training" title="Freakypenguin5 (Freakypenguin5)
 Fire crystals: 500
 Speedups: 15 days  (15d)
 Preferred: 1300utc or later
-Parsed hours UTC: [13]"><strong>Freakypenguin5</strong><div class="sub">15d</div><div class="fc">FC 500</div></div></div><div class="hour" data-hour="14"><div class="hour-label">14:00</div></div><div class="hour" data-hour="15"><div class="hour-label">15:00</div></div><div class="hour" data-hour="16"><div class="hour-label">16:00</div><div class="chip tier-top" data-player="4" data-day="training" title="Salad (697936161)
+Parsed slots UTC: 13:00, 13:30"><strong>Freakypenguin5</strong><div class="sub">15d · candidate</div><div class="fc">FC 500</div></div></div><div class="slot" data-slot="27"><div class="slot-label">13:30</div><div class="chip tier-high chip-ghost" data-player="2" data-day="training" title="Freakypenguin5 (Freakypenguin5)
+Fire crystals: 500
+Speedups: 15 days  (15d)
+Preferred: 1300utc or later
+Parsed slots UTC: 13:00, 13:30"><strong>Freakypenguin5</strong><div class="sub">15d · candidate</div><div class="fc">FC 500</div></div></div><div class="slot hour-start" data-slot="28"><div class="slot-label">14:00</div></div><div class="slot" data-slot="29"><div class="slot-label">14:30</div></div><div class="slot hour-start" data-slot="30"><div class="slot-label">15:00</div></div><div class="slot" data-slot="31"><div class="slot-label">15:30</div></div><div class="slot hour-start" data-slot="32"><div class="slot-label">16:00</div><div class="chip tier-top chip-ghost" data-player="4" data-day="training" title="Salad (697936161)
 Fire crystals: 1000
 Speedups: 20 days ( on troop training day)  (20d)
 Preferred: 16 UTC (Troop training day)
-Parsed hours UTC: [16]"><strong>Salad</strong><div class="sub">20d</div><div class="fc">FC 1,000</div></div></div><div class="hour" data-hour="17"><div class="hour-label">17:00</div></div><div class="hour" data-hour="18"><div class="hour-label">18:00</div></div><div class="hour" data-hour="19"><div class="hour-label">19:00</div></div><div class="hour" data-hour="20"><div class="hour-label">20:00</div></div><div class="hour" data-hour="21"><div class="hour-label">21:00</div></div><div class="hour" data-hour="22"><div class="hour-label">22:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="training" title="moto (697740133)
+Parsed slots UTC: 16:00, 16:30"><strong>Salad</strong><div class="sub">20d · candidate</div><div class="fc">FC 1,000</div></div></div><div class="slot" data-slot="33"><div class="slot-label">16:30</div><div class="chip tier-top chip-ghost" data-player="4" data-day="training" title="Salad (697936161)
+Fire crystals: 1000
+Speedups: 20 days ( on troop training day)  (20d)
+Preferred: 16 UTC (Troop training day)
+Parsed slots UTC: 16:00, 16:30"><strong>Salad</strong><div class="sub">20d · candidate</div><div class="fc">FC 1,000</div></div></div><div class="slot hour-start" data-slot="34"><div class="slot-label">17:00</div></div><div class="slot" data-slot="35"><div class="slot-label">17:30</div></div><div class="slot hour-start" data-slot="36"><div class="slot-label">18:00</div></div><div class="slot" data-slot="37"><div class="slot-label">18:30</div></div><div class="slot hour-start" data-slot="38"><div class="slot-label">19:00</div></div><div class="slot" data-slot="39"><div class="slot-label">19:30</div></div><div class="slot hour-start" data-slot="40"><div class="slot-label">20:00</div></div><div class="slot" data-slot="41"><div class="slot-label">20:30</div></div><div class="slot hour-start" data-slot="42"><div class="slot-label">21:00</div></div><div class="slot" data-slot="43"><div class="slot-label">21:30</div></div><div class="slot hour-start" data-slot="44"><div class="slot-label">22:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="training" title="moto (697740133)
 Fire crystals: 425
 Speedups: 2 days  (2d)
 Preferred: 0-1 utc or 22-24 utc
-Parsed hours UTC: [0, 1, 22, 23]"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="hour" data-hour="23"><div class="hour-label">23:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="training" title="moto (697740133)
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot" data-slot="45"><div class="slot-label">22:30</div><div class="chip tier-low chip-ghost" data-player="5" data-day="training" title="moto (697740133)
 Fire crystals: 425
 Speedups: 2 days  (2d)
 Preferred: 0-1 utc or 22-24 utc
-Parsed hours UTC: [0, 1, 22, 23]"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div></div><div class="flex-lane"><h3>Flexible candidates · 1 · pick one UTC hour per player</h3><div class="flex-cards"><div class="flex-card tier-low" data-player="5" data-day="training" title="moto (697740133)
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot hour-start" data-slot="46"><div class="slot-label">23:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="training" title="moto (697740133)
+Fire crystals: 425
+Speedups: 2 days  (2d)
+Preferred: 0-1 utc or 22-24 utc
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot" data-slot="47"><div class="slot-label">23:30</div><div class="chip tier-low chip-ghost" data-player="5" data-day="training" title="moto (697740133)
+Fire crystals: 425
+Speedups: 2 days  (2d)
+Preferred: 0-1 utc or 22-24 utc
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div></div><div class="flex-lane"><h3>Flexible candidates · 3 · pick one UTC slot per player</h3><div class="flex-cards"><div class="flex-card tier-top" data-player="4" data-day="training" title="Salad (697936161)
+Speedups: 20 days ( on troop training day)
+Preferred: 16 UTC (Troop training day)
+Click a UTC slot to commit them to that 30-minute window."><div class="flex-header"><strong>Salad</strong><span class="sub"> · 20d · FC 1,000</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="4" data-day="training" data-slot="32">16:00</button><button class="opt" data-player="4" data-day="training" data-slot="33">16:30</button></div></div><div class="flex-card tier-high" data-player="2" data-day="training" title="Freakypenguin5 (Freakypenguin5)
+Speedups: 15 days
+Preferred: 1300utc or later
+Click a UTC slot to commit them to that 30-minute window."><div class="flex-header"><strong>Freakypenguin5</strong><span class="sub"> · 15d · FC 500</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="2" data-day="training" data-slot="26">13:00</button><button class="opt" data-player="2" data-day="training" data-slot="27">13:30</button></div></div><div class="flex-card tier-low" data-player="5" data-day="training" title="moto (697740133)
 Speedups: 2 days
 Preferred: 0-1 utc or 22-24 utc
-Click a UTC hour to commit them to that slot."><div class="flex-header"><strong>moto</strong><span class="sub"> · 2d · FC 425</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="5" data-day="training" data-hour="0">00</button><button class="opt" data-player="5" data-day="training" data-hour="1">01</button><button class="opt" data-player="5" data-day="training" data-hour="22">22</button><button class="opt" data-player="5" data-day="training" data-hour="23">23</button></div></div></div></div><details class="declined-lane"><summary>Declined · 2 <span class="declined-hint">(opted out of this day; not schedulable)</span></summary><ul class="declined-list"><li title="-"><strong>HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl</strong><span class="declined-meta"> · speedups: Not required · time: -</span></li><li title="Don’t have much give to others"><strong>Little Biter</strong><span class="declined-meta"> · speedups: 160h · time: Don’t have much give to others</span></li></ul></details></section><section class="day-card" data-day="research"><h2>🔬 Research Day</h2><div class="meta">Vice President buff · <strong>2</strong> fixed · <strong>1</strong> flexible · <strong>0</strong> unscheduled · <strong>2</strong> declined</div><div class="grid"><div class="hour" data-hour="0"><div class="hour-label">00:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="research" title="moto (697740133)
+Click a UTC slot to commit them to that 30-minute window."><div class="flex-header"><strong>moto</strong><span class="sub"> · 2d · FC 425</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="5" data-day="training" data-slot="0">00:00</button><button class="opt" data-player="5" data-day="training" data-slot="1">00:30</button><button class="opt" data-player="5" data-day="training" data-slot="2">01:00</button><button class="opt" data-player="5" data-day="training" data-slot="3">01:30</button><button class="opt" data-player="5" data-day="training" data-slot="44">22:00</button><button class="opt" data-player="5" data-day="training" data-slot="45">22:30</button><button class="opt" data-player="5" data-day="training" data-slot="46">23:00</button><button class="opt" data-player="5" data-day="training" data-slot="47">23:30</button></div></div></div></div><details class="declined-lane"><summary>Declined · 2 <span class="declined-hint">(opted out of this day; not schedulable)</span></summary><ul class="declined-list"><li title="-"><strong>HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl</strong><span class="declined-meta"> · speedups: Not required · time: -</span></li><li title="Don’t have much give to others"><strong>Little Biter</strong><span class="declined-meta"> · speedups: 160h · time: Don’t have much give to others</span></li></ul></details></section><section class="day-card" data-day="research"><h2>🔬 Research Day</h2><div class="meta">Vice President buff · <strong>0</strong> fixed · <strong>3</strong> flexible · <strong>0</strong> unscheduled · <strong>2</strong> declined</div><div class="grid"><div class="slot hour-start" data-slot="0"><div class="slot-label">00:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="research" title="moto (697740133)
 Fire crystals: 425
 Speedups: 2 days  (2d)
 Preferred: 0-1 utc or 22-24 utc
-Parsed hours UTC: [0, 1, 22, 23]"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="hour" data-hour="1"><div class="hour-label">01:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="research" title="moto (697740133)
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot" data-slot="1"><div class="slot-label">00:30</div><div class="chip tier-low chip-ghost" data-player="5" data-day="research" title="moto (697740133)
 Fire crystals: 425
 Speedups: 2 days  (2d)
 Preferred: 0-1 utc or 22-24 utc
-Parsed hours UTC: [0, 1, 22, 23]"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="hour" data-hour="2"><div class="hour-label">02:00</div></div><div class="hour" data-hour="3"><div class="hour-label">03:00</div></div><div class="hour" data-hour="4"><div class="hour-label">04:00</div></div><div class="hour" data-hour="5"><div class="hour-label">05:00</div></div><div class="hour" data-hour="6"><div class="hour-label">06:00</div></div><div class="hour" data-hour="7"><div class="hour-label">07:00</div></div><div class="hour" data-hour="8"><div class="hour-label">08:00</div></div><div class="hour" data-hour="9"><div class="hour-label">09:00</div></div><div class="hour" data-hour="10"><div class="hour-label">10:00</div></div><div class="hour" data-hour="11"><div class="hour-label">11:00</div></div><div class="hour" data-hour="12"><div class="hour-label">12:00</div><div class="chip tier-top" data-player="4" data-day="research" title="Salad (697936161)
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot hour-start" data-slot="2"><div class="slot-label">01:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="research" title="moto (697740133)
+Fire crystals: 425
+Speedups: 2 days  (2d)
+Preferred: 0-1 utc or 22-24 utc
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot" data-slot="3"><div class="slot-label">01:30</div><div class="chip tier-low chip-ghost" data-player="5" data-day="research" title="moto (697740133)
+Fire crystals: 425
+Speedups: 2 days  (2d)
+Preferred: 0-1 utc or 22-24 utc
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot hour-start" data-slot="4"><div class="slot-label">02:00</div></div><div class="slot" data-slot="5"><div class="slot-label">02:30</div></div><div class="slot hour-start" data-slot="6"><div class="slot-label">03:00</div></div><div class="slot" data-slot="7"><div class="slot-label">03:30</div></div><div class="slot hour-start" data-slot="8"><div class="slot-label">04:00</div></div><div class="slot" data-slot="9"><div class="slot-label">04:30</div></div><div class="slot hour-start" data-slot="10"><div class="slot-label">05:00</div></div><div class="slot" data-slot="11"><div class="slot-label">05:30</div></div><div class="slot hour-start" data-slot="12"><div class="slot-label">06:00</div></div><div class="slot" data-slot="13"><div class="slot-label">06:30</div></div><div class="slot hour-start" data-slot="14"><div class="slot-label">07:00</div></div><div class="slot" data-slot="15"><div class="slot-label">07:30</div></div><div class="slot hour-start" data-slot="16"><div class="slot-label">08:00</div></div><div class="slot" data-slot="17"><div class="slot-label">08:30</div></div><div class="slot hour-start" data-slot="18"><div class="slot-label">09:00</div></div><div class="slot" data-slot="19"><div class="slot-label">09:30</div></div><div class="slot hour-start" data-slot="20"><div class="slot-label">10:00</div></div><div class="slot" data-slot="21"><div class="slot-label">10:30</div></div><div class="slot hour-start" data-slot="22"><div class="slot-label">11:00</div></div><div class="slot" data-slot="23"><div class="slot-label">11:30</div></div><div class="slot hour-start" data-slot="24"><div class="slot-label">12:00</div><div class="chip tier-top chip-ghost" data-player="4" data-day="research" title="Salad (697936161)
 Fire crystals: 1000
 Speedups: 25 days (research day)  (25d)
 Preferred: 12 UTC (Research day)
-Parsed hours UTC: [12]"><strong>Salad</strong><div class="sub">25d</div><div class="fc">FC 1,000</div></div></div><div class="hour" data-hour="13"><div class="hour-label">13:00</div><div class="chip tier-med" data-player="2" data-day="research" title="Freakypenguin5 (Freakypenguin5)
+Parsed slots UTC: 12:00, 12:30"><strong>Salad</strong><div class="sub">25d · candidate</div><div class="fc">FC 1,000</div></div></div><div class="slot" data-slot="25"><div class="slot-label">12:30</div><div class="chip tier-top chip-ghost" data-player="4" data-day="research" title="Salad (697936161)
+Fire crystals: 1000
+Speedups: 25 days (research day)  (25d)
+Preferred: 12 UTC (Research day)
+Parsed slots UTC: 12:00, 12:30"><strong>Salad</strong><div class="sub">25d · candidate</div><div class="fc">FC 1,000</div></div></div><div class="slot hour-start" data-slot="26"><div class="slot-label">13:00</div><div class="chip tier-med chip-ghost" data-player="2" data-day="research" title="Freakypenguin5 (Freakypenguin5)
 Fire crystals: 500
 Speedups: 6 days  (6d)
 Preferred: 1300utc or later
-Parsed hours UTC: [13]"><strong>Freakypenguin5</strong><div class="sub">6d</div><div class="fc">FC 500</div></div></div><div class="hour" data-hour="14"><div class="hour-label">14:00</div></div><div class="hour" data-hour="15"><div class="hour-label">15:00</div></div><div class="hour" data-hour="16"><div class="hour-label">16:00</div></div><div class="hour" data-hour="17"><div class="hour-label">17:00</div></div><div class="hour" data-hour="18"><div class="hour-label">18:00</div></div><div class="hour" data-hour="19"><div class="hour-label">19:00</div></div><div class="hour" data-hour="20"><div class="hour-label">20:00</div></div><div class="hour" data-hour="21"><div class="hour-label">21:00</div></div><div class="hour" data-hour="22"><div class="hour-label">22:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="research" title="moto (697740133)
+Parsed slots UTC: 13:00, 13:30"><strong>Freakypenguin5</strong><div class="sub">6d · candidate</div><div class="fc">FC 500</div></div></div><div class="slot" data-slot="27"><div class="slot-label">13:30</div><div class="chip tier-med chip-ghost" data-player="2" data-day="research" title="Freakypenguin5 (Freakypenguin5)
+Fire crystals: 500
+Speedups: 6 days  (6d)
+Preferred: 1300utc or later
+Parsed slots UTC: 13:00, 13:30"><strong>Freakypenguin5</strong><div class="sub">6d · candidate</div><div class="fc">FC 500</div></div></div><div class="slot hour-start" data-slot="28"><div class="slot-label">14:00</div></div><div class="slot" data-slot="29"><div class="slot-label">14:30</div></div><div class="slot hour-start" data-slot="30"><div class="slot-label">15:00</div></div><div class="slot" data-slot="31"><div class="slot-label">15:30</div></div><div class="slot hour-start" data-slot="32"><div class="slot-label">16:00</div></div><div class="slot" data-slot="33"><div class="slot-label">16:30</div></div><div class="slot hour-start" data-slot="34"><div class="slot-label">17:00</div></div><div class="slot" data-slot="35"><div class="slot-label">17:30</div></div><div class="slot hour-start" data-slot="36"><div class="slot-label">18:00</div></div><div class="slot" data-slot="37"><div class="slot-label">18:30</div></div><div class="slot hour-start" data-slot="38"><div class="slot-label">19:00</div></div><div class="slot" data-slot="39"><div class="slot-label">19:30</div></div><div class="slot hour-start" data-slot="40"><div class="slot-label">20:00</div></div><div class="slot" data-slot="41"><div class="slot-label">20:30</div></div><div class="slot hour-start" data-slot="42"><div class="slot-label">21:00</div></div><div class="slot" data-slot="43"><div class="slot-label">21:30</div></div><div class="slot hour-start" data-slot="44"><div class="slot-label">22:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="research" title="moto (697740133)
 Fire crystals: 425
 Speedups: 2 days  (2d)
 Preferred: 0-1 utc or 22-24 utc
-Parsed hours UTC: [0, 1, 22, 23]"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="hour" data-hour="23"><div class="hour-label">23:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="research" title="moto (697740133)
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot" data-slot="45"><div class="slot-label">22:30</div><div class="chip tier-low chip-ghost" data-player="5" data-day="research" title="moto (697740133)
 Fire crystals: 425
 Speedups: 2 days  (2d)
 Preferred: 0-1 utc or 22-24 utc
-Parsed hours UTC: [0, 1, 22, 23]"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div></div><div class="flex-lane"><h3>Flexible candidates · 1 · pick one UTC hour per player</h3><div class="flex-cards"><div class="flex-card tier-low" data-player="5" data-day="research" title="moto (697740133)
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot hour-start" data-slot="46"><div class="slot-label">23:00</div><div class="chip tier-low chip-ghost" data-player="5" data-day="research" title="moto (697740133)
+Fire crystals: 425
+Speedups: 2 days  (2d)
+Preferred: 0-1 utc or 22-24 utc
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div><div class="slot" data-slot="47"><div class="slot-label">23:30</div><div class="chip tier-low chip-ghost" data-player="5" data-day="research" title="moto (697740133)
+Fire crystals: 425
+Speedups: 2 days  (2d)
+Preferred: 0-1 utc or 22-24 utc
+Parsed slots UTC: 00:00, 00:30, 01:00, 01:30, 22:00, 22:30, 23:00, 23:30"><strong>moto</strong><div class="sub">2d · candidate</div><div class="fc">FC 425</div></div></div></div><div class="flex-lane"><h3>Flexible candidates · 3 · pick one UTC slot per player</h3><div class="flex-cards"><div class="flex-card tier-top" data-player="4" data-day="research" title="Salad (697936161)
+Speedups: 25 days (research day)
+Preferred: 12 UTC (Research day)
+Click a UTC slot to commit them to that 30-minute window."><div class="flex-header"><strong>Salad</strong><span class="sub"> · 25d · FC 1,000</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="4" data-day="research" data-slot="24">12:00</button><button class="opt" data-player="4" data-day="research" data-slot="25">12:30</button></div></div><div class="flex-card tier-med" data-player="2" data-day="research" title="Freakypenguin5 (Freakypenguin5)
+Speedups: 6 days
+Preferred: 1300utc or later
+Click a UTC slot to commit them to that 30-minute window."><div class="flex-header"><strong>Freakypenguin5</strong><span class="sub"> · 6d · FC 500</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="2" data-day="research" data-slot="26">13:00</button><button class="opt" data-player="2" data-day="research" data-slot="27">13:30</button></div></div><div class="flex-card tier-low" data-player="5" data-day="research" title="moto (697740133)
 Speedups: 2 days
 Preferred: 0-1 utc or 22-24 utc
-Click a UTC hour to commit them to that slot."><div class="flex-header"><strong>moto</strong><span class="sub"> · 2d · FC 425</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="5" data-day="research" data-hour="0">00</button><button class="opt" data-player="5" data-day="research" data-hour="1">01</button><button class="opt" data-player="5" data-day="research" data-hour="22">22</button><button class="opt" data-player="5" data-day="research" data-hour="23">23</button></div></div></div></div><details class="declined-lane"><summary>Declined · 2 <span class="declined-hint">(opted out of this day; not schedulable)</span></summary><ul class="declined-list"><li title="-"><strong>HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl</strong><span class="declined-meta"> · speedups: Not required · time: -</span></li><li title="Don’t have much give to others"><strong>Little Biter</strong><span class="declined-meta"> · speedups: 35h · time: Don’t have much give to others</span></li></ul></details></section>
+Click a UTC slot to commit them to that 30-minute window."><div class="flex-header"><strong>moto</strong><span class="sub"> · 2d · FC 425</span></div><div class="flex-options"><span class="opt-label">Pick UTC:</span><button class="opt" data-player="5" data-day="research" data-slot="0">00:00</button><button class="opt" data-player="5" data-day="research" data-slot="1">00:30</button><button class="opt" data-player="5" data-day="research" data-slot="2">01:00</button><button class="opt" data-player="5" data-day="research" data-slot="3">01:30</button><button class="opt" data-player="5" data-day="research" data-slot="44">22:00</button><button class="opt" data-player="5" data-day="research" data-slot="45">22:30</button><button class="opt" data-player="5" data-day="research" data-slot="46">23:00</button><button class="opt" data-player="5" data-day="research" data-slot="47">23:30</button></div></div></div></div><details class="declined-lane"><summary>Declined · 2 <span class="declined-hint">(opted out of this day; not schedulable)</span></summary><ul class="declined-list"><li title="-"><strong>HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl</strong><span class="declined-meta"> · speedups: Not required · time: -</span></li><li title="Don’t have much give to others"><strong>Little Biter</strong><span class="declined-meta"> · speedups: 35h · time: Don’t have much give to others</span></li></ul></details></section>
 <h2 style="margin-top:24px;font-size:16px;">All responses</h2>
 <table><thead><tr><th>Player</th><th>Game ID</th><th>FC</th><th>Constr.</th><th>Constr. time</th><th>Train.</th><th>Train. time</th><th>Res.</th><th>Res. time</th></tr></thead><tbody><tr><td>Little Biter</td><td>699444353</td><td class="num">2700</td><td class="num">1.2d</td><td>I don’t have much , give to others</td><td class="num">6.7d</td><td>Don’t have much give to others</td><td class="num">1.5d</td><td>Don’t have much give to others</td></tr><tr><td>Freakypenguin5</td><td>Freakypenguin5</td><td class="num">500</td><td class="num">15d</td><td>1300utc or later</td><td class="num">15d</td><td>1300utc or later</td><td class="num">6d</td><td>1300utc or later</td></tr><tr><td>HELIX &#x27;&#x27;&#x27;&#x27;|HOPEl</td><td>699049556</td><td class="num">1810</td><td class="num">40d</td><td>10:00 UTC</td><td class="num">0</td><td>-</td><td class="num">0</td><td>-</td></tr><tr><td>Salad</td><td>697936161</td><td class="num">1000</td><td class="num">30d</td><td>12 UTC</td><td class="num">20d</td><td>16 UTC (Troop training day)</td><td class="num">25d</td><td>12 UTC (Research day)</td></tr><tr><td>moto</td><td>697740133</td><td class="num">425</td><td class="num">7.5d</td><td>0-1 utc or 22-24 utc</td><td class="num">2d</td><td>0-1 utc or 22-24 utc</td><td class="num">2d</td><td>0-1 utc or 22-24 utc</td></tr></tbody></table>
 <script>
-const INITIAL_PLACED = {"construction": {"2": 13, "3": 10, "4": 12}, "training": {"2": 13, "4": 16}, "research": {"2": 13, "4": 12}};
+const INITIAL_PLACED = {"construction": {}, "training": {}, "research": {}};
+const PLAYER_NAMES = {"1": "Little Biter", "2": "Freakypenguin5", "3": "HELIX ''''|HOPEl", "4": "Salad", "5": "moto"};
+const PLAYER_SPEEDUPS = {"construction": {"1": 30.0, "2": 360.0, "3": 960.0, "4": 720.0, "5": 180.0}, "training": {"1": 160.0, "2": 360.0, "3": 0.0, "4": 480.0, "5": 48.0}, "research": {"1": 35.0, "2": 144.0, "3": 0.0, "4": 600.0, "5": 48.0}};
 const TOTAL_SCHEDULABLE = 10;
+const TOTAL_SLOTS = 48;
 </script>
 <script>
-// State shape (v3):  { day: { playerIdx: hour | null } }
-//   * hour  = explicitly assigned to that UTC hour
+// State shape (v4):  { day: { playerIdx: slot | null } }
+//   * slot  = explicitly assigned to that 30-minute UTC slot (0..47)
 //   * null  = explicitly unassigned (only meaningful for players whose
 //             default in INITIAL_PLACED would otherwise auto-assign them)
 //   * key absent = use INITIAL_PLACED default if present, else unassigned
 // INITIAL_PLACED is injected before this script runs.
-const STORAGE_KEY = "svs-assignments-v3::" + document.body.dataset.csvKey;
+const STORAGE_KEY = "svs-assignments-v4::" + document.body.dataset.csvKey;
 
 function loadState() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -300,31 +438,135 @@ function loadState() {
 }
 function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
 
-// Resolve the actual hour a player is assigned to for a given day, taking
+// Resolve the actual slot a player is assigned to for a given day, taking
 // the INITIAL_PLACED defaults into account. Returns null if unassigned.
-function effectiveHour(day, idx) {
+function effectiveSlot(day, idx) {
   const state = loadState();
   if (state[day] && Object.prototype.hasOwnProperty.call(state[day], idx)) {
-    return state[day][idx];                 // could be hour or null
+    return state[day][idx];                 // could be slot or null
   }
   if (INITIAL_PLACED[day] && INITIAL_PLACED[day][idx] !== undefined) {
-    return INITIAL_PLACED[day][idx];        // default-assigned (single-hour)
+    return INITIAL_PLACED[day][idx];        // default-assigned (single-slot)
   }
   return null;
 }
 
-function setAssignment(day, idx, hour) {
+// Format a 0..47 slot index as HH:MM for prompts and badges.
+function slotLabelJS(s) {
+  const n = Number(s);
+  const h = Math.floor(n / 2);
+  const m = (n % 2) * 30;
+  return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+}
+
+// Look up a player's speedup pool (in hours) for a given day. Returns
+// `null` when we couldn't parse the speedup answer.
+function speedupOf(day, idx) {
+  const pool = PLAYER_SPEEDUPS[day] || {};
+  const v = pool[String(idx)];
+  return (v === undefined) ? null : v;
+}
+
+// Compact human label for a speedup pool: "0", "15d", "20d", "8h", "?".
+function fmtSpeedup(hours) {
+  if (hours == null) return "?";
+  if (hours === 0) return "0";
+  if (hours >= 24) {
+    const d = hours / 24;
+    return (Math.abs(d - Math.round(d)) < 0.05)
+      ? Math.round(d) + "d" : d.toFixed(1) + "d";
+  }
+  return (Math.abs(hours - Math.round(hours)) < 0.05)
+    ? Math.round(hours) + "h" : hours.toFixed(1) + "h";
+}
+
+// Compare two players for priority (higher speedups first; unknown last;
+// tie-broken alphabetically so the result is stable).
+function comparePriority(day, aIdx, bIdx) {
+  const sa = speedupOf(day, aIdx);
+  const sb = speedupOf(day, bIdx);
+  const va = (sa == null) ? -Infinity : sa;
+  const vb = (sb == null) ? -Infinity : sb;
+  if (vb !== va) return vb - va;
+  const na = (PLAYER_NAMES[aIdx] || "").toLowerCase();
+  const nb = (PLAYER_NAMES[bIdx] || "").toLowerCase();
+  return na < nb ? -1 : (na > nb ? 1 : 0);
+}
+
+// Return every player currently assigned to (day, slot), sorted by priority
+// (highest speedups first), taking INITIAL_PLACED defaults and explicit
+// state overrides into account. Each entry is { idx, name, speedup }.
+function getOccupants(day, slot) {
+  const out = [];
+  const seen = new Set();
+  const target = String(slot);
+  const state = loadState();
+  const defs = INITIAL_PLACED[day] || {};
+  const us = state[day] || {};
+  for (const idx of Object.keys(defs)) {
+    const eff = effectiveSlot(day, idx);
+    if (eff !== null && String(eff) === target) {
+      out.push({ idx, name: PLAYER_NAMES[idx] || ("#" + idx), speedup: speedupOf(day, idx) });
+      seen.add(idx);
+    }
+  }
+  for (const idx of Object.keys(us)) {
+    if (seen.has(idx)) continue;
+    const v = us[idx];
+    if (v !== null && String(v) === target) {
+      out.push({ idx, name: PLAYER_NAMES[idx] || ("#" + idx), speedup: speedupOf(day, idx) });
+    }
+  }
+  out.sort((a, b) => comparePriority(day, a.idx, b.idx));
+  return out;
+}
+
+function setAssignment(day, idx, slot) {
+  const current = effectiveSlot(day, idx);
+  const isToggle = slot === null || String(current) === String(slot);
+
+  // Conflict guard: if we're about to assign someone to a slot that already
+  // has another player, ask for explicit confirmation, sorted by priority
+  // (= speedup pool) so it's obvious who currently owns the slot.
+  // Releasing (toggle-off) is always allowed without a prompt.
+  if (!isToggle && slot !== null) {
+    const others = getOccupants(day, slot).filter(o => String(o.idx) !== String(idx));
+    if (others.length > 0) {
+      const newName = PLAYER_NAMES[idx] || ("#" + idx);
+      const newSp   = speedupOf(day, idx);
+      const lines = others.map((o, i) => {
+        const marker = (i === 0) ? "  \u2605 " : "    ";   // star on top priority
+        return marker + o.name + "  (" + fmtSpeedup(o.speedup) + ")";
+      });
+      // Where would the new player slot into the priority ordering?
+      const sortedAll = others.concat([{ idx, name: newName, speedup: newSp }])
+        .sort((a, b) => comparePriority(day, a.idx, b.idx));
+      const newRank = sortedAll.findIndex(o => String(o.idx) === String(idx)) + 1;
+      const rankNote = " \u2014 adding " + newName + " (" + fmtSpeedup(newSp) +
+        ") would rank #" + newRank + " of " + sortedAll.length;
+      const dayLabel = day.charAt(0).toUpperCase() + day.slice(1);
+      const msg =
+        dayLabel + " " + slotLabelJS(slot) + " UTC already has " +
+        others.length + " player" + (others.length === 1 ? "" : "s") +
+        ", sorted by speedup priority:\n\n" +
+        lines.join("\n") + "\n" +
+        rankNote + ".\n\n" +
+        "OK = stack them here anyway.  Cancel = leave it (recommended if " +
+        "the existing top-priority player should keep the slot).";
+      if (!confirm(msg)) return;
+    }
+  }
+
   const state = loadState();
   state[day] = state[day] || {};
-  const current = effectiveHour(day, idx);
   const isDefault = INITIAL_PLACED[day] && INITIAL_PLACED[day][idx] !== undefined;
-  if (hour === null || String(current) === String(hour)) {
+  if (isToggle) {
     // Toggle off. If this player has a default we must store an explicit
     // null override so the default doesn't snap back on next load.
     if (isDefault) state[day][idx] = null;
     else           delete state[day][idx];
   } else {
-    state[day][idx] = String(hour);
+    state[day][idx] = String(slot);
   }
   if (Object.keys(state[day]).length === 0) delete state[day];
   saveState(state);
@@ -332,33 +574,37 @@ function setAssignment(day, idx, hour) {
 }
 
 function applyState() {
-  document.querySelectorAll(".hour").forEach(c => c.classList.remove("has-assigned"));
+  document.querySelectorAll(".slot").forEach(c => {
+    c.classList.remove("has-assigned", "conflict");
+    const old = c.querySelector(".conflict-badge");
+    if (old) old.remove();
+  });
 
-  // Single-hour grid chips (non-ghost). For these, INITIAL_PLACED auto-assigns
-  // them to their one hour unless the user explicitly unassigned.
+  // Single-slot grid chips (non-ghost). For these, INITIAL_PLACED auto-assigns
+  // them to their one slot unless the user explicitly unassigned.
   document.querySelectorAll(".chip:not(.chip-ghost)").forEach(chip => {
     chip.classList.remove("assigned");
     const day = chip.dataset.day;
     const idx = chip.dataset.player;
-    const cell = chip.closest(".hour");
+    const cell = chip.closest(".slot");
     if (!cell) return;                      // unscheduled lane chip
-    const eff = effectiveHour(day, idx);
-    if (eff !== null && String(eff) === String(cell.dataset.hour)) {
+    const eff = effectiveSlot(day, idx);
+    if (eff !== null && String(eff) === String(cell.dataset.slot)) {
       chip.classList.add("assigned");
       cell.classList.add("has-assigned");
     }
   });
 
-  // Ghost (flexible candidate) chips inside hour cells.
+  // Ghost (flexible candidate) chips inside slot cells.
   document.querySelectorAll(".chip.chip-ghost").forEach(chip => {
     chip.classList.remove("assigned", "dimmed-other");
     const day = chip.dataset.day;
     const idx = chip.dataset.player;
-    const cell = chip.closest(".hour");
+    const cell = chip.closest(".slot");
     if (!cell) return;
-    const eff = effectiveHour(day, idx);
+    const eff = effectiveSlot(day, idx);
     if (eff === null) return;               // still a free candidate
-    if (String(eff) === String(cell.dataset.hour)) {
+    if (String(eff) === String(cell.dataset.slot)) {
       chip.classList.add("assigned");
       cell.classList.add("has-assigned");
     } else {
@@ -366,11 +612,11 @@ function applyState() {
     }
   });
 
-  // Hour-pick buttons inside flex cards.
+  // Slot-pick buttons inside flex cards.
   document.querySelectorAll(".opt").forEach(btn => {
     btn.classList.remove("assigned");
-    const eff = effectiveHour(btn.dataset.day, btn.dataset.player);
-    if (eff !== null && String(eff) === String(btn.dataset.hour)) {
+    const eff = effectiveSlot(btn.dataset.day, btn.dataset.player);
+    if (eff !== null && String(eff) === String(btn.dataset.slot)) {
       btn.classList.add("assigned");
     }
   });
@@ -399,22 +645,70 @@ function applyState() {
   }
   const counter = document.getElementById("assignedCount");
   if (counter) counter.textContent = assigned + " / " + TOTAL_SCHEDULABLE + " assigned";
+
+  // Clear any previous priority-winner markings before re-deriving them.
+  document.querySelectorAll(".chip.priority-winner")
+    .forEach(c => c.classList.remove("priority-winner"));
+
+  // Conflict pass: any slot cell with 2+ assigned chips gets flagged, and
+  // the player with the highest speedup pool gets a priority-winner star.
+  // We re-derive from the DOM so we catch all combinations of placed and
+  // flexible chips that landed in the same cell.
+  let conflictCells = 0;
+  document.querySelectorAll(".slot").forEach(cell => {
+    const assigned = Array.from(cell.querySelectorAll(".chip.assigned"));
+    if (assigned.length <= 1) return;
+
+    // Sort by priority (speedup desc, unknown last, alpha tie-break).
+    const day = cell.closest(".day-card").dataset.day;
+    assigned.sort((a, b) => comparePriority(day, a.dataset.player, b.dataset.player));
+    assigned[0].classList.add("priority-winner");
+
+    cell.classList.add("conflict");
+    const badge = document.createElement("div");
+    badge.className = "conflict-badge";
+    badge.textContent = "\u26A0 " + assigned.length + " here";
+    // Tooltip enumerates the conflict in priority order.
+    const lines = assigned.map((c, i) => {
+      const nm = PLAYER_NAMES[c.dataset.player] || ("#" + c.dataset.player);
+      const sp = fmtSpeedup(speedupOf(day, c.dataset.player));
+      return (i === 0 ? "\u2605 " : "  ") + nm + " (" + sp + ")";
+    });
+    badge.title = "Conflict at " + slotLabelJS(cell.dataset.slot) +
+      " UTC (priority order):\n" + lines.join("\n") +
+      "\n\nClick any chip to release that player.";
+    // Insert above the chips, below the slot label.
+    const label = cell.querySelector(".slot-label");
+    if (label && label.nextSibling) cell.insertBefore(badge, label.nextSibling);
+    else                            cell.appendChild(badge);
+    conflictCells++;
+  });
+  const cc = document.getElementById("conflictCount");
+  if (cc) {
+    if (conflictCells > 0) {
+      cc.textContent = "\u26A0 " + conflictCells + " conflict" + (conflictCells === 1 ? "" : "s");
+      cc.classList.add("active");
+    } else {
+      cc.textContent = "no conflicts";
+      cc.classList.remove("active");
+    }
+  }
 }
 
 function onChipClick(e) {
   const chip = e.currentTarget;
-  const cell = chip.closest(".hour");
+  const cell = chip.closest(".slot");
   if (!cell) return;                          // unscheduled chips aren't clickable
-  setAssignment(chip.dataset.day, chip.dataset.player, cell.dataset.hour);
+  setAssignment(chip.dataset.day, chip.dataset.player, cell.dataset.slot);
 }
 
 function onOptClick(e) {
   const btn = e.currentTarget;
-  setAssignment(btn.dataset.day, btn.dataset.player, btn.dataset.hour);
+  setAssignment(btn.dataset.day, btn.dataset.player, btn.dataset.slot);
 }
 
 function clearAll() {
-  if (!confirm("Reset to defaults? Fixed-time players auto-assign to their slot; flexible players become unassigned.")) return;
+  if (!confirm("Reset to defaults? Fixed-slot players auto-assign to their 30-minute slot; flexible players become unassigned.")) return;
   localStorage.removeItem(STORAGE_KEY);
   applyState();
 }
